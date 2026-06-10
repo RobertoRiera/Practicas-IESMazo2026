@@ -339,6 +339,66 @@
     transform: translateY(0);
   }
 
+  /* ---------- Index panel ---------- */
+  #indexPanel {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 300px; max-width: 85vw;
+    background: var(--card);
+    border-left: 1px solid var(--line);
+    box-shadow: var(--shadow-lg);
+    z-index: 60;
+    transform: translateX(100%);
+    transition: transform .35s cubic-bezier(.4,0,.2,1);
+    display: flex; flex-direction: column;
+  }
+  #indexPanel.open { transform: translateX(0); }
+  #indexPanel header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  #indexPanel header h3 {
+    margin: 0; font-size: 16px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #indexClose {
+    background: none; border: none; cursor: pointer;
+    font-size: 20px; color: var(--muted); padding: 4px;
+    border-radius: 6px; line-height: 1;
+  }
+  #indexClose:hover { background: var(--inline-code-bg); color: var(--ink); }
+  #indexList {
+    flex: 1; overflow-y: auto; padding: 10px 0;
+    list-style: none; margin: 0;
+  }
+  #indexList li { margin: 0; }
+  #indexList a {
+    display: block; padding: 8px 20px; text-decoration: none;
+    color: var(--muted); font-size: 14px; font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: all .15s;
+  }
+  #indexList a:hover {
+    background: var(--inline-code-bg); color: var(--ink);
+  }
+  #indexList a.active {
+    border-left-color: var(--git);
+    color: var(--ink); font-weight: 600;
+    background: var(--git-glow);
+  }
+  #indexList a.sub {
+    padding-left: 36px; font-size: 13px;
+  }
+  #overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.3);
+    z-index: 55; opacity: 0; pointer-events: none;
+    transition: opacity .35s;
+  }
+  #overlay.show { opacity: 1; pointer-events: auto; }
+
+  #indexBtn { position: relative; }
+  #indexBtn.active { background: var(--git); color: #fff; border-color: var(--git); }
+
   /* ---------- Responsive ---------- */
   @media (max-width: 600px) {
     .lead { margin-left: 0; }
@@ -349,6 +409,7 @@
     header.hero { padding: 44px 16px 40px; }
     .code pre { padding: 14px 16px; }
     .code code { font-size: 12.5px; }
+    #indexPanel { width: 100vw; max-width: 100vw; }
   }
 </style>
 </head>
@@ -635,7 +696,18 @@ Thumbs.db</code></pre></div>
   <span id="year"></span>
 </footer>
 
+<div id="overlay"></div>
+
+<div id="indexPanel">
+  <header>
+    <h3>📑 Índice</h3>
+    <button id="indexClose" aria-label="Cerrar índice">✕</button>
+  </header>
+  <ul id="indexList"></ul>
+</div>
+
 <div class="float-btns">
+  <button class="float-btn" id="indexBtn" aria-label="Abrir índice" title="Índice">📑</button>
   <button class="float-btn" id="themeToggle" aria-label="Cambiar modo oscuro/claro" title="Cambiar tema">🌙</button>
   <button class="float-btn" id="backToTop" aria-label="Volver arriba" title="Volver arriba">↑</button>
 </div>
@@ -708,6 +780,71 @@ Thumbs.db</code></pre></div>
       });
     }, { threshold: 0.1 });
     revealSections.forEach(function (s) { observer.observe(s); });
+
+    // ---- Index panel ----
+    var indexBtn = document.getElementById('indexBtn');
+    var indexPanel = document.getElementById('indexPanel');
+    var indexClose = document.getElementById('indexClose');
+    var overlay = document.getElementById('overlay');
+    var indexList = document.getElementById('indexList');
+
+    function buildIndex() {
+      var items = [];
+      document.querySelectorAll('section h2, section h3').forEach(function (h) {
+        var sec = h.closest('section');
+        if (!sec || !sec.id) return;
+        var text = h.textContent.replace(/[0-9☆★↻i]\s*/, '').trim();
+        var isSub = h.tagName === 'H3';
+        items.push({ id: sec.id, text: text, sub: isSub });
+      });
+      indexList.innerHTML = '';
+      items.forEach(function (item) {
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = '#' + item.id;
+        a.textContent = item.text;
+        if (item.sub) a.classList.add('sub');
+        li.appendChild(a);
+        indexList.appendChild(li);
+      });
+    }
+    buildIndex();
+
+    function toggleIndex(open) {
+      indexPanel.classList.toggle('open', open);
+      overlay.classList.toggle('show', open);
+      indexBtn.classList.toggle('active', open);
+    }
+
+    indexBtn.addEventListener('click', function () { toggleIndex(true); });
+    indexClose.addEventListener('click', function () { toggleIndex(false); });
+    overlay.addEventListener('click', function () { toggleIndex(false); });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') toggleIndex(false);
+    });
+
+    // Highlight active index entry on scroll
+    var indexLinks = indexList.querySelectorAll('li a');
+    var indexSections = [];
+    indexLinks.forEach(function (a) {
+      var id = a.getAttribute('href').slice(1);
+      var sec = document.getElementById(id);
+      if (sec) indexSections.push({ el: sec, link: a });
+    });
+    function setIndexActive() {
+      var scrollY = window.scrollY + 120;
+      var activeId = null;
+      indexSections.forEach(function (s) {
+        if (s.el.offsetTop <= scrollY) activeId = s.el.id;
+      });
+      indexLinks.forEach(function (a) { a.classList.remove('active'); });
+      indexSections.forEach(function (s) {
+        if (s.el.id === activeId) s.link.classList.add('active');
+      });
+    }
+    window.addEventListener('scroll', setIndexActive);
+    setIndexActive();
 
     // ---- Footer year ----
     document.getElementById('year').textContent = new Date().getFullYear();
