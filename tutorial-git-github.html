@@ -1,861 +1,710 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Git y GitHub — Tutorial guiado</title>
-  <style>
-    /* ---------- Variables y Temas (Claro por defecto) ---------- */
-    :root {
-      --git: #f05133;
-      --git-dark: #c1351b;
-      --ink: #1f2328;
-      --muted: #57606a;
-      --line: #d0d7de;
-      --bg: #f6f8fa;
-      --card: #ffffff;
-      --code-bg: #0d1117;
-      --code-ink: #e6edf3;
-      --ok: #1a7f37;
-      --warn: #9a6700;
-      --warn-bg: #fff8c5;
-      --tip-bg: #ddf4ff;
-      --tip-line: #54aeff;
-      --hero-bg-1: #24292f;
-      --hero-bg-2: #32383f;
-      --hero-ink: #ffffff;
-      --hero-muted: #c9d1d9;
-      --badge-tag: #ffb4a3;
-      --sidebar-width: 280px;
-    }
-
-    /* ---------- Variables para Modo Oscuro ---------- */
-    [data-theme="dark"] {
-      --ink: #e6edf3;
-      --muted: #8b949e;
-      --line: #30363d;
-      --bg: #0d1117;
-      --card: #161b22;
-      --code-bg: #010409;
-      --code-ink: #e6edf3;
-      --ok: #238636;
-      --warn: #9e6a03;
-      --warn-bg: rgba(187, 128, 9, 0.15);
-      --tip-bg: rgba(56, 139, 253, 0.15);
-      --tip-line: #388bfd;
-      --hero-bg-1: #010409;
-      --hero-bg-2: #161b22;
-      --hero-ink: #e6edf3;
-      --hero-muted: #8b949e;
-      --badge-tag: #f05133;
-    }
-
-    * {
-      box-sizing: border-box;
-      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    }
-
-    html {
-      scroll-behavior: smooth;
-      scroll-padding-top: 20px;
-    }
-
-    code,
-    pre,
-    kbd {
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    }
-
-    /* ---------- Barra de progreso ---------- */
-    #progress {
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 3px;
-      background: var(--git);
-      width: 0%;
-      z-index: 100;
-      transition: width 0.1s ease;
-    }
-
-    /* ---------- Layout Moderno de Dos Columnas (PC) ---------- */
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: var(--ink);
-      background: var(--bg);
-      line-height: 1.65;
-      display: grid;
-      grid-template-columns: var(--sidebar-width) 1fr;
-      grid-template-rows: auto 1fr auto;
-      grid-template-areas:
-        "header header"
-        "nav main"
-        "footer footer";
-      min-height: 100vh;
-      transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Modificación de la cuadrícula al colapsar el acordeón en Escritorio */
-    body.sidebar-closed {
-      --sidebar-width: 0px;
-    }
-
-    header.hero {
-      grid-area: header;
-      background: linear-gradient(135deg, var(--hero-bg-1) 0%, var(--hero-bg-2) 100%);
-      color: var(--hero-ink);
-      padding: 40px 20px;
-      text-align: center;
-      border-bottom: 4px solid var(--git);
-      position: relative;
-    }
-
-    header.hero .logo {
-      font-size: 38px;
-      margin-bottom: 4px;
-    }
-
-    header.hero h1 {
-      margin: 0 0 6px;
-      font-size: clamp(24px, 4vw, 36px);
-      letter-spacing: -0.5px;
-    }
-
-    header.hero p {
-      margin: 0 auto;
-      max-width: 620px;
-      color: var(--hero-muted);
-      font-size: 16px;
-    }
-
-    .tag {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 4px 12px;
-      border-radius: 999px;
-      background: rgba(240, 81, 51, .18);
-      color: var(--badge-tag);
-      font-size: 13px;
-      font-weight: 600;
-      border: 1px solid rgba(240, 81, 51, .4);
-    }
-
-    /* Botones superiores de Control */
-    .header-controls {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      display: flex;
-      gap: 10px;
-      z-index: 20;
-    }
-
-    .theme-toggle,
-    .menu-toggle-btn {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: var(--hero-ink);
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .theme-toggle:hover,
-    .menu-toggle-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    /* ---------- Menú Lateral Acordeón (PC) ---------- */
-    nav.toc {
-      grid-area: nav;
-      position: sticky;
-      top: 0;
-      height: calc(100vh - 3px);
-      background: var(--card);
-      border-right: 1px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      padding: 30px 15px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      z-index: 95;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease, opacity 0.2s ease;
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    /* Comportamiento del colapso en PC */
-    body.sidebar-closed nav.toc {
-      transform: translateX(-100%);
-      padding: 30px 0px;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    nav.toc a {
-      text-decoration: none;
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 500;
-      padding: 8px 12px;
-      border-radius: 6px;
-      display: block;
-      line-height: 1.3;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    }
-
-    nav.toc a.sub {
-      padding-left: 26px;
-      font-size: 13px;
-      opacity: 0.85;
-    }
-
-    nav.toc a:hover,
-    nav.toc a.active {
-      background: var(--bg);
-      color: var(--ink);
-    }
-
-    nav.toc a.active {
-      border-left: 3px solid var(--git);
-      font-weight: 600;
-      color: var(--git-dark);
-      padding-left: 9px;
-    }
-
-    nav.toc a.sub.active {
-      padding-left: 23px;
-    }
-
-    /* ---------- Contenido Principal ---------- */
-    main {
-      grid-area: main;
-      max-width: 840px;
-      margin: 0 auto;
-      padding: 40px 40px 80px;
-      width: 100%;
-    }
-
-    section {
-      margin-bottom: 52px;
-      scroll-margin-top: 40px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-
-    section.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    h2 {
-      font-size: 26px;
-      margin: 0 0 4px;
-      letter-spacing: -0.3px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    h2 .num {
-      flex: 0 0 auto;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--git);
-      color: #fff;
-      font-size: 18px;
-      font-weight: 700;
-      display: grid;
-      place-items: center;
-    }
-
-    h3 {
-      font-size: 18px;
-      margin: 28px 0 6px;
-    }
-
-    .lead {
-      color: var(--muted);
-      margin: 0 0 18px 52px;
-    }
-
-    p {
-      margin: 0 0 14px;
-    }
-
-    ul,
-    ol {
-      margin: 0 0 16px;
-      padding-left: 22px;
-    }
-
-    li {
-      margin-bottom: 7px;
-    }
-
-    a {
-      color: var(--git-dark);
-    }
-
-    hr {
-      border: 0;
-      border-top: 1px solid var(--line);
-      margin: 0 0 40px;
-    }
-
-    /* ---------- Bloques de Código ---------- */
-    .code {
-      position: relative;
-      background: var(--code-bg);
-      border-radius: 10px;
-      margin: 0 0 18px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-    }
-
-    .code pre {
-      margin: 0;
-      padding: 16px 18px;
-      overflow-x: auto;
-    }
-
-    .code code {
-      color: var(--code-ink);
-      font-size: 14px;
-      line-height: 1.8;
-      white-space: pre;
-    }
-
-    .code .cmt {
-      color: #8b949e;
-    }
-
-    .code .copy {
-      position: absolute;
-      top: 9px;
-      right: 9px;
-      background: #21262d;
-      color: #c9d1d9;
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .15s;
-    }
-
-    .code .copy:hover {
-      background: #30363d;
-      color: #fff;
-    }
-
-    .code .copy.done {
-      background: var(--ok);
-      color: #fff;
-      border-color: var(--ok);
-    }
-
-    :not(pre)>code {
-      background: var(--line);
-      color: var(--ink);
-      padding: 2px 6px;
-      border-radius: 5px;
-      font-size: 0.88em;
-    }
-
-    /* ---------- Cajas de Mensajes ---------- */
-    .box {
-      border-radius: 10px;
-      padding: 14px 18px;
-      margin: 0 0 18px;
-      font-size: 15px;
-    }
-
-    .box p:last-child {
-      margin-bottom: 0;
-    }
-
-    .box.tip {
-      background: var(--tip-bg);
-      border-left: 4px solid var(--tip-line);
-    }
-
-    .box.warn {
-      background: var(--warn-bg);
-      border-left: 4px solid var(--warn);
-    }
-
-    .box b {
-      font-weight: 700;
-    }
-
-    /* ---------- Gráfico SVG ---------- */
-    .diagram {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 24px;
-      margin: 0 0 24px;
-    }
-
-    .diagram svg {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    .diagram text {
-      fill: var(--ink) !important;
-    }
-
-    .diagram text[fill="#57606a"],
-    .diagram text[fill="#8b949e"] {
-      fill: var(--muted) !important;
-    }
-
-    .diagram text[fill="#fff"] {
-      fill: #fff !important;
-    }
-
-    .diagram rect[fill="#fff"] {
-      fill: var(--card) !important;
-      stroke: var(--line) !important;
-    }
-
-    /* ---------- Tabla de comandos ---------- */
-    .cheat {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--card);
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      font-size: 14.5px;
-    }
-
-    .cheat th {
-      background: var(--hero-bg-1);
-      color: var(--hero-ink);
-      text-align: left;
-      padding: 11px 14px;
-      font-size: 13px;
-      letter-spacing: .3px;
-    }
-
-    .cheat td {
-      padding: 10px 14px;
-      border-top: 1px solid var(--line);
-      vertical-align: top;
-    }
-
-    .cheat tr:nth-child(even) td {
-      background: rgba(0, 0, 0, 0.015);
-    }
-
-    [data-theme="dark"] .cheat tr:nth-child(even) td {
-      background: rgba(255, 255, 255, 0.015);
-    }
-
-    .cheat td code {
-      background: var(--bg);
-      color: var(--ink);
-      padding: 3px 8px;
-      border-radius: 5px;
-      white-space: nowrap;
-      font-weight: 600;
-      border: 1px solid var(--line);
-    }
-
-    /* ---------- Botón Volver Arriba ---------- */
-    #backToTop {
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      background: var(--git);
-      color: white;
-      border: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 90;
-    }
-
-    #backToTop.visible {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    #backToTop:hover {
-      background: var(--git-dark);
-      transform: translateY(-3px);
-    }
-
-    /* Capa oscura móvil */
-    #overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 94;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-
-    #overlay.show {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    footer {
-      grid-area: footer;
-      text-align: center;
-      color: var(--muted);
-      font-size: 14px;
-      padding: 30px 20px;
-      border-top: 1px solid var(--line);
-      background: var(--card);
-    }
-
-    /* ---------- Vista Móvil Adaptada (Flotante) ---------- */
-    @media (max-width: 850px) {
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git y GitHub — Tutorial guiado</title>
+    <style>
+      /* ---------- Variables y Temas (Claro por defecto) ---------- */
+      :root {
+        --git: #f05133;
+        --git-dark: #c1351b;
+        --ink: #1f2328;
+        --muted: #57606a;
+        --line: #d0d7de;
+        --bg: #f6f8fa;
+        --card: #ffffff;
+        --code-bg: #0d1117;
+        --code-ink: #e6edf3;
+        --ok: #1a7f37;
+        --warn: #9a6700;
+        --warn-bg: #fff8c5;
+        --tip-bg: #ddf4ff;
+        --tip-line: #54aeff;
+        --hero-bg-1: #24292f;
+        --hero-bg-2: #32383f;
+        --hero-ink: #ffffff;
+        --hero-muted: #c9d1d9;
+        --badge-tag: #ffb4a3;
+        --sidebar-width: 280px;
+        --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
+        --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+      }
+
+      /* ---------- Variables para Modo Oscuro ---------- */
+      [data-theme="dark"] {
+        --ink: #e6edf3;
+        --muted: #8b949e;
+        --line: #30363d;
+        --bg: #0d1117;
+        --card: #161b22;
+        --code-bg: #010409;
+        --code-ink: #e6edf3;
+        --ok: #238636;
+        --warn: #9e6a03;
+        --warn-bg: rgba(187, 128, 9, 0.15);
+        --tip-bg: rgba(56, 139, 253, 0.15);
+        --tip-line: #388bfd;
+        --hero-bg-1: #010409;
+        --hero-bg-2: #161b22;
+        --hero-ink: #e6edf3;
+        --hero-muted: #8b949e;
+        --badge-tag: #f05133;
+        --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+        --shadow-md: 0 8px 24px rgba(0,0,0,0.3);
+      }
+
+      * {
+        box-sizing: border-box;
+        transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 30px;
+      }
+
+      code, pre, kbd {
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      }
+
+      /* ---------- Barra de progreso ---------- */
+      #progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: var(--git);
+        width: 0%;
+        z-index: 1000;
+        transition: width 0.1s linear;
+      }
+
+      /* ---------- Layout Base ---------- */
       body {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-          "header"
-          "main"
-          "footer";
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        line-height: 1.65;
+        display: grid;
+        grid-template-columns: var(--sidebar-width) 1fr;
+        grid-template-rows: auto 1fr auto;
+        grid-template-areas: 
+          "header header"
+          "nav main"
+          "footer footer";
+        min-height: 100vh;
+        transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      body.sidebar-closed {
+        --sidebar-width: 0px;
+      }
+
+      header.hero {
+        grid-area: header;
+        background: linear-gradient(135deg, var(--hero-bg-1) 0%, var(--hero-bg-2) 100%);
+        color: var(--hero-ink);
+        padding: 50px 20px;
+        text-align: center;
+        border-bottom: 4px solid var(--git);
+        position: relative;
+        overflow: hidden;
+      }
+
+      header.hero h1 {
+        margin: 0 0 8px;
+        font-size: clamp(26px, 5vw, 42px);
+        letter-spacing: -0.5px;
+        font-weight: 800;
+      }
+
+      header.hero p {
+        margin: 0 auto;
+        max-width: 620px;
+        color: var(--hero-muted);
+        font-size: 16.5px;
+      }
+
+      .logo {
+        font-size: 42px;
+        margin-bottom: 8px;
+        animation: float 4s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+      }
+
+      .tag {
+        display: inline-block;
+        margin-top: 16px;
+        padding: 5px 14px;
+        border-radius: 999px;
+        background: rgba(240, 81, 51, .18);
+        color: var(--badge-tag);
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid rgba(240, 81, 51, .4);
+      }
+
+      /* Control del Tema Superior Derecho */
+      .header-controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 20;
+      }
+
+      .theme-toggle {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: var(--hero-ink);
+        padding: 8px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .theme-toggle:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+      }
+
+      /* ---------- BOTÓN DEL MENÚ (Acompañando a la página encima de la barra) ---------- */
+      .menu-toggle-btn {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 110;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .menu-toggle-btn:hover {
+        box-shadow: var(--shadow-md);
+        background: var(--bg);
+        transform: scale(1.02);
+      }
+
+      /* Ajuste dinámico de posición según estado del menú lateral */
+      body.sidebar-closed .menu-toggle-btn {
+        left: 15px;
+      }
+
+      /* ---------- Menú Lateral ---------- */
+      nav.toc {
+        grid-area: nav;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        background: var(--card);
+        border-right: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        padding: 80px 15px 30px 15px; /* Margen superior amplio para dar espacio al botón flotante */
+        overflow-y: auto;
+        z-index: 95;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease;
+        opacity: 1;
+        transform: translateX(0);
       }
 
       body.sidebar-closed nav.toc {
         transform: translateX(-100%);
+        padding: 80px 0px 30px 0px;
         opacity: 0;
+        pointer-events: none;
       }
 
-      nav.toc {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 280px;
-        height: 100vh;
-        transform: translateX(-100%);
-        opacity: 0;
-        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
-        padding-top: 40px;
+      nav.toc a {
+        text-decoration: none;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 500;
+        padding: 8px 12px;
+        border-radius: 6px;
+        display: block;
+        line-height: 1.3;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
       }
 
-      /* Cuando está abierto en móvil, se muestra por encima */
-      body.mobile-open nav.toc {
-        transform: translateX(0);
-        opacity: 1;
-        pointer-events: auto;
+      nav.toc a.sub {
+        padding-left: 26px;
+        font-size: 13px;
+        opacity: 0.85;
       }
 
+      nav.toc a:hover {
+        background: var(--bg);
+        color: var(--ink);
+        padding-left: 16px;
+      }
+
+      nav.toc a.active {
+        background: rgba(240, 81, 51, 0.08);
+        border-left: 4px solid var(--git);
+        font-weight: 600;
+        color: var(--git-dark);
+        padding-left: 14px;
+      }
+
+      /* ---------- Contenido Principal ---------- */
       main {
-        padding: 30px 20px;
+        grid-area: main;
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 60px 40px 100px;
+        width: 100%;
       }
 
-      .lead {
-        margin-left: 0;
+      /* Animación interactiva para las secciones */
+      section {
+        margin-bottom: 60px;
+        scroll-margin-top: 40px;
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.6s cubic-bezier(0.25, 1, 0.5, 1), transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+      }
+
+      section.visible {
+        opacity: 1;
+        transform: translateY(0);
       }
 
       h2 {
-        font-size: 22px;
+        font-size: 28px;
+        margin: 0 0 10px;
+        letter-spacing: -0.4px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
       }
-    }
-  </style>
-</head>
 
-<body>
+      h2 .num {
+        flex: 0 0 auto;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--git);
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 2px 6px rgba(240, 81, 51, 0.3);
+      }
 
-  <div id="progress"></div>
-  <div id="overlay"></div>
+      h3 {
+        font-size: 20px;
+        margin: 32px 0 10px;
+        color: var(--ink);
+      }
 
-  <header class="hero">
-    <div class="header-controls">
-      <button class="menu-toggle-btn" id="menuBtn">☰ Menú</button>
-      <button class="theme-toggle" id="themeBtn">🌙 Modo Oscuro</button>
-    </div>
-    <div class="logo">🐙</div>
-    <h1>Git &amp; GitHub paso a paso</h1>
-    <p>Una guía práctica para llevar tu código del ordenador a la nube, trabajar con ramas y colaborar sin pisarte con
-      nadie.</p>
-    <div class="tag">Tutorial guiado · Nivel intermedio</div>
-  </header>
+      .lead {
+        font-size: 17px;
+        color: var(--muted);
+        margin: 0 0 22px 54px;
+      }
 
-  <nav class="toc" id="tocBar"></nav>
+      p { margin: 0 0 16px; }
+      ul, ol { margin: 0 0 18px; padding-left: 24px; }
+      li { margin-bottom: 8px; }
+      a { color: var(--git-dark); font-weight: 500; }
+      hr { border: 0; border-top: 1px solid var(--line); margin: 40px 0; }
 
-  <button id="backToTop" title="Volver arriba">↑</button>
+      /* ---------- Cajas y Bloques Mejorados ---------- */
+      .code {
+        position: relative;
+        background: var(--code-bg);
+        border-radius: 10px;
+        margin: 0 0 22px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow-sm);
+      }
+      .code:hover {
+        box-shadow: var(--shadow-md);
+      }
 
-  <main>
-    <section id="intro">
-      <h2><span class="num">i</span> Git no es GitHub</h2>
-      <p class="lead">Se nombran juntos todo el rato, pero son cosas distintas.</p>
-      <p><b>Git</b> es el programa que se instala en tu ordenador y guarda el historial de tu proyecto: cada cambio,
-        quién lo hizo y cuándo. Funciona sin internet.</p>
-      <p><b>GitHub</b> es una página web donde subes una copia de ese historial para guardarlo en la nube, compartirlo y
-        trabajar en equipo. Hay alternativas (GitLab, Bitbucket), pero el flujo es el mismo.</p>
-      <div class="box tip">
-        <p>💡 <b>La analogía:</b> Git es como el control de versiones de un documento (guardar partidas). GitHub es como
-          Google Drive donde dejas ese documento para que otros lo vean y lo editen contigo.</p>
+      .code pre { margin: 0; padding: 18px 20px; overflow-x: auto; }
+      .code code { color: var(--code-ink); font-size: 14.5px; line-height: 1.8; }
+      .code .cmt { color: #8b949e; font-style: italic; }
+
+      .code .copy {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #21262d;
+        color: #c9d1d9;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .code .copy:hover { background: #30363d; color: #fff; transform: translateY(-1px); }
+      .code .copy.done { background: var(--ok); color: #fff; border-color: var(--ok); }
+
+      :not(pre)>code {
+        background: var(--line);
+        color: var(--ink);
+        padding: 3px 7px;
+        border-radius: 5px;
+        font-size: 0.9em;
+      }
+
+      .box { border-radius: 10px; padding: 16px 20px; margin: 0 0 22px; font-size: 15.5px; box-shadow: var(--shadow-sm); }
+      .box.tip { background: var(--tip-bg); border-left: 4px solid var(--tip-line); }
+      .box.warn { background: var(--warn-bg); border-left: 4px solid var(--warn); }
+
+      /* ---------- Diagramas Estilizados ---------- */
+      .diagram { 
+        background: var(--card); 
+        border: 1px solid var(--line); 
+        border-radius: 14px; 
+        padding: 26px; 
+        margin: 0 0 26px;
+        box-shadow: var(--shadow-sm);
+      }
+      .diagram:hover { transform: scale(1.005); box-shadow: var(--shadow-md); }
+      .diagram svg { width: 100%; height: auto; display: block; }
+      .diagram text { fill: var(--ink) !important; transition: fill 0.3s; }
+      .diagram text[fill="#57606a"], .diagram text[fill="#8b949e"] { fill: var(--muted) !important; }
+      .diagram text[fill="#fff"] { fill: #fff !important; }
+      .diagram rect[fill="#fff"] { fill: var(--card) !important; stroke: var(--line) !important; }
+
+      /* ---------- Tablas Modernas ---------- */
+      .cheat { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow-sm); }
+      .cheat th { background: var(--hero-bg-1); color: var(--hero-ink); text-align: left; padding: 14px; font-size: 13.5px; letter-spacing: .5px; text-transform: uppercase; }
+      .cheat td { padding: 12px 14px; border-top: 1px solid var(--line); vertical-align: middle; }
+      .cheat tr { transition: transform 0.2s; }
+      .cheat tr:hover td { background: rgba(240, 81, 51, 0.03) !important; }
+      .cheat td code { background: var(--bg); color: var(--ink); padding: 4px 10px; border-radius: 6px; font-weight: 600; border: 1px solid var(--line); }
+
+      /* ---------- Botones Flotantes de Navegación ---------- */
+      #backToTop {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        background: var(--git);
+        color: white;
+        border: none;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        opacity: 0;
+        visibility: hidden;
+        box-shadow: var(--shadow-md);
+        z-index: 90;
+      }
+      #backToTop.visible { opacity: 1; visibility: visible; }
+      #backToTop:hover { background: var(--git-dark); transform: translateY(-4px); }
+
+      footer {
+        grid-area: footer;
+        text-align: center;
+        color: var(--muted);
+        font-size: 14px;
+        padding: 40px 20px;
+        border-top: 1px solid var(--line);
+        background: var(--card);
+      }
+
+      /* ---------- 📱 RESPONSIVE ADAPTADO 📱 ---------- */
+      @media (max-width: 900px) {
+        body {
+          grid-template-columns: 1fr;
+          grid-template-areas: "header" "main" "footer";
+        }
+        body.sidebar-open nav.toc {
+          transform: translateX(0);
+          opacity: 1;
+          width: 280px;
+          pointer-events: auto;
+        }
+        nav.toc {
+          position: fixed;
+          left: 0;
+          top: 0;
+          transform: translateX(-100%);
+          opacity: 0;
+          width: 280px;
+          box-shadow: var(--shadow-md);
+          pointer-events: none;
+        }
+        main { padding: 40px 20px 80px; }
+        .lead { margin-left: 0; }
+        h2 { font-size: 24px; }
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div id="progress"></div>
+    
+    <button class="menu-toggle-btn" id="menuBtn">☰ Menú</button>
+
+    <header class="hero">
+      <div class="header-controls">
+        <button class="theme-toggle" id="themeBtn">🌙 Modo Oscuro</button>
       </div>
-    </section>
+      <div class="logo">🐙</div>
+      <h1>Git &amp; GitHub paso a paso</h1>
+      <p>Una guía práctica para llevar tu código del ordenador a la nube, trabajar con ramas y colaborar sin pisarte con nadie.</p>
+      <div class="tag">Tutorial guiado · Nivel intermedio</div>
+    </header>
 
-    <section id="flujo">
-      <h2><span class="num">↻</span> El flujo que vamos a repetir siempre</h2>
-      <p class="lead">Tres "zonas" en tu equipo y una en la nube. Todo Git se reduce a mover cambios entre ellas.</p>
-      <div class="diagram">
-        <svg viewBox="0 0 760 230" xmlns="http://www.w3.org/2000/svg">
-          <g>
-            <rect x="10" y="70" width="150" height="70" rx="10" fill="#fff" stroke="#d0d7de" stroke-width="1.5" />
-            <text x="85" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2328">Working Dir</text>
-            <text x="85" y="120" text-anchor="middle" font-size="11.5" fill="#57606a">tus archivos</text>
-          </g>
-          <g>
-            <rect x="210" y="70" width="150" height="70" rx="10" fill="#fff" stroke="#d0d7de" stroke-width="1.5" />
-            <text x="285" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2328">Staging</text>
-            <text x="285" y="120" text-anchor="middle" font-size="11.5" fill="#57606a">lo preparado</text>
-          </g>
-          <g>
-            <rect x="410" y="70" width="150" height="70" rx="10" fill="#fff" stroke="#d0d7de" stroke-width="1.5" />
-            <text x="485" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2328">Repo local</text>
-            <text x="485" y="120" text-anchor="middle" font-size="11.5" fill="#57606a">historial .git</text>
-          </g>
-          <g>
-            <rect x="610" y="70" width="140" height="70" rx="10" fill="#24292f" stroke="#24292f" />
-            <text x="680" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">GitHub</text>
-            <text x="680" y="120" text-anchor="middle" font-size="11.5" fill="#c9d1d9">la nube</text>
-          </g>
-          <defs>
-            <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
-              <path d="M0,0 L6,3 L0,6 Z" fill="#f05133" />
-            </marker>
-          </defs>
-          <line x1="162" y1="92" x2="206" y2="92" stroke="#f05133" stroke-width="2" marker-end="url(#ar)" />
-          <text x="184" y="58" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f05133">add</text>
-          <line x1="362" y1="92" x2="406" y2="92" stroke="#f05133" stroke-width="2" marker-end="url(#ar)" />
-          <text x="384" y="58" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f05133">commit</text>
-          <line x1="562" y1="92" x2="606" y2="92" stroke="#f05133" stroke-width="2" marker-end="url(#ar)" />
-          <text x="584" y="58" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f05133">push</text>
-          <line x1="606" y1="120" x2="14" y2="120" stroke="#8b949e" stroke-width="1.6" stroke-dasharray="5 4"
-            marker-end="url(#ar2)" />
-          <defs>
-            <marker id="ar2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
-              <path d="M0,0 L6,3 L0,6 Z" fill="#8b949e" />
-            </marker>
-          </defs>
-          <text x="330" y="160" text-anchor="middle" font-size="11.5" font-weight="700" fill="#8b949e">pull / clone ·
-            traer cambios de vuelta</text>
-        </svg>
-      </div>
-      <p>Lee el dibujo de izquierda a derecha: editas archivos (<b>Working Dir</b>), eliges cuáles guardar con
-        <code>add</code> (<b>Staging</b>), los confirmas con <code>commit</code> (<b>Repo local</b>) y los envías a la
-        nube con <code>push</code> (<b>GitHub</b>). La flecha de vuelta (<code>pull</code>) trae lo que otros hayan
-        subido.</p>
-    </section>
+    <nav class="toc" id="tocBar">
+      <div id="tocLinksContainer"></div>
+    </nav>
 
-    <hr>
+    <button id="backToTop" title="Volver arriba">↑</button>
 
-    <section id="config">
-      <h2><span class="num">1</span> Configurar Git (solo la primera vez)</h2>
-      <p class="lead">Git necesita saber tu nombre y correo para firmar cada commit.</p>
-      <p>Comprueba que lo tienes instalado:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git --version</code></pre>
-      </div>
-      <p>Configura tu identidad (usa el mismo correo que en tu cuenta de GitHub):</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git config --global user.name "Tu Nombre"
+    <main>
+      <section id="intro">
+        <h2><span class="num">i</span> Git no es GitHub</h2>
+        <p class="lead">Se nombran juntos todo el rato, pero son cosas distintas.</p>
+        <p><b>Git</b> es el programa que se instala en tu ordenador y guarda el historial de tu proyecto: cada cambio, quién lo hizo y cuándo. Funciona sin internet.</p>
+        <p><b>GitHub</b> es una página web donde subes una copia de ese historial para guardarlo en la nube, compartirlo y trabajar en equipo. Hay alternativas (GitLab, Bitbucket), pero el flujo es el mismo.</p>
+        <div class="box tip">
+          <p>💡 <b>La analogía:</b> Git es como el control de versiones de un documento (guardar partidas). GitHub es como Google Drive donde dejas ese documento para que otros lo vean y lo editen contigo.</p>
+        </div>
+      </section>
+
+      <section id="flujo">
+        <h2><span class="num">↻</span> El flujo que vamos a repetir siempre</h2>
+        <p class="lead">Tres "zonas" en tu equipo y una en la nube. Todo Git se reduce a mover cambios entre ellas.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 760 230" xmlns="http://www.w3.org/2000/svg">
+            <g>
+              <rect x="10" y="70" width="150" height="70" rx="10" fill="#fff" stroke="#d0d7de" stroke-width="1.5" />
+              <text x="85" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2328">Working Dir</text>
+              <text x="85" y="120" text-anchor="middle" font-size="11.5" fill="#57606a">tus archivos</text>
+            </g>
+            <g>
+              <rect x="210" y="70" width="150" height="70" rx="10" fill="#fff" stroke="#d0d7de" stroke-width="1.5" />
+              <text x="285" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2328">Staging</text>
+              <text x="285" y="120" text-anchor="middle" font-size="11.5" fill="#57606a">lo preparado</text>
+            </g>
+            <g>
+              <rect x="410" y="70" width="150" height="70" rx="10" fill="#fff" stroke="#d0d7de" stroke-width="1.5" />
+              <text x="485" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2328">Repo local</text>
+              <text x="485" y="120" text-anchor="middle" font-size="11.5" fill="#57606a">historial .git</text>
+            </g>
+            <g>
+              <rect x="610" y="70" width="140" height="70" rx="10" fill="#24292f" stroke="#24292f" />
+              <text x="680" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">GitHub</text>
+              <text x="680" y="120" text-anchor="middle" font-size="11.5" fill="#c9d1d9">la nube</text>
+            </g>
+            <defs>
+              <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#f05133" />
+              </marker>
+            </defs>
+            <line x1="162" y1="92" x2="206" y2="92" stroke="#f05133" stroke-width="2" marker-end="url(#ar)" />
+            <text x="184" y="58" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f05133">add</text>
+            <line x1="362" y1="92" x2="406" y2="92" stroke="#f05133" stroke-width="2" marker-end="url(#ar)" />
+            <text x="384" y="58" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f05133">commit</text>
+            <line x1="562" y1="92" x2="606" y2="92" stroke="#f05133" stroke-width="2" marker-end="url(#ar)" />
+            <text x="584" y="58" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f05133">push</text>
+            <line x1="606" y1="120" x2="14" y2="120" stroke="#8b949e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ar2)" />
+            <defs>
+              <marker id="ar2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#8b949e" />
+              </marker>
+            </defs>
+            <text x="330" y="160" text-anchor="middle" font-size="11.5" font-weight="700" fill="#8b949e">pull / clone · traer cambios de vuelta</text>
+          </svg>
+        </div>
+        <p>Lee el dibujo de izquierda a derecha: editas archivos (<b>Working Dir</b>), eliges cuáles guardar con <code>add</code> (<b>Staging</b>), los confirmas con <code>commit</code> (<b>Repo local</b>) y los envías a la nube con <code>push</code> (<b>GitHub</b>). La flecha de vuelta (<code>pull</code>) trae lo que otros hayan subido.</p>
+      </section>
+
+      <hr>
+
+      <section id="config">
+        <h2><span class="num">1</span> Configurar Git (solo la primera vez)</h2>
+        <p class="lead">Git necesita saber tu nombre y correo para firmar cada commit.</p>
+        <p>Comprueba que lo tienes instalado:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git --version</code></pre>
+        </div>
+        <p>Configura tu identidad (usa el mismo correo que en tu cuenta de GitHub):</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git config --global user.name "Tu Nombre"
 git config --global user.email "tucorreo@ejemplo.com"</code></pre>
-      </div>
-      <p>Define <code>main</code> como nombre de la rama principal por defecto:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git config --global init.defaultBranch main</code></pre>
-      </div>
-      <div class="box tip">
-        <p>💡 <code>--global</code> aplica la configuration a todos tus proyectos. Para revisar cómo está todo:
-          <code>git config --list</code>.</p>
-      </div>
-    </section>
+        </div>
+        <p>Define <code>main</code> como nombre de la rama principal por defecto:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git config --global init.defaultBranch main</code></pre>
+        </div>
+        <div class="box tip">
+          <p>💡 <code>--global</code> aplica la configuración a todos tus proyectos. Para revisar cómo está todo: <code>git config --list</code>.</p>
+        </div>
+      </section>
 
-    <section id="repo">
-      <h2><span class="num">2</span> Crear o clonar un repositorio</h2>
-      <p class="lead">Un repositorio (repo) es una carpeta que Git vigila. Hay dos formas de empezar.</p>
-      <h3>Opción A — Convertir una carpeta tuya en repo</h3>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code><span class="cmt"># dentro de la carpeta de tu proyecto</span>
+      <section id="repo">
+        <h2><span class="num">2</span> Crear o clonar un repositorio</h2>
+        <p class="lead">Un repositorio (repo) es una carpeta que Git vigila. Hay dos formas de empezar.</p>
+        <h3>Opción A — Convertir una carpeta tuya en repo</h3>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code><span class="cmt"># dentro de la carpeta de tu proyecto</span>
 git init</code></pre>
-      </div>
-      <p>Esto crea una subcarpeta oculta <code>.git</code> donde se guarda todo el historial. Si la borras, pierdes el
-        historial.</p>
-      <h3>Opción B — Clonar un repo que ya existe en GitHub</h3>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git clone https://github.com/usuario/proyecto.git</code></pre>
-      </div>
-      <p>Descarga una copia completa (con todo su historial) en una carpeta nueva. Es lo que harás para bajar el
-        proyecto de la clase o el de un compañero.</p>
-    </section>
+        </div>
+        <p>Esto crea una subcarpeta oculta <code>.git</code> donde se guarda todo el historial. Si la borras, pierdes el historial.</p>
+        <h3>Opción B — Clonar un repo que ya existe en GitHub</h3>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git clone https://github.com/usuario/proyecto.git</code></pre>
+        </div>
+        <p>Descarga una copia completa (con todo su historial) en una carpeta nueva. Es lo que harás para bajar el proyecto de la clase o el de un compañero.</p>
+      </section>
 
-    <section id="commit">
-      <h2><span class="num">3</span> El ciclo de trabajo: add y commit</h2>
-      <p class="lead">Este es el corazón de Git y lo repetirás decenas de veces al día.</p>
-      <p>Antes de nada, mira siempre en qué estado estás. <code>git status</code> es tu mejor amigo:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git status</code></pre>
-      </div>
-      <p>Prepara los archivos que quieres guardar (pasarlos a <i>Staging</i>):</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code><span class="cmt"># un archivo concreto</span>
+      <section id="commit">
+        <h2><span class="num">3</span> El ciclo de trabajo: add y commit</h2>
+        <p class="lead">Este es el corazón de Git y lo repetirás decenas de veces al día.</p>
+        <p>Antes de nada, mira siempre en qué estado estás. <code>git status</code> es tu mejor amigo:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git status</code></pre>
+        </div>
+        <p>Prepara los archivos que quieres guardar (pasarlos a <i>Staging</i>):</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code><span class="cmt"># un archivo concreto</span>
 git add index.html
 
 <span class="cmt"># todos los cambios de golpe</span>
 git add .</code></pre>
-      </div>
-      <p>Confirma el cambio con un mensaje claro que explique <i>qué</i> hiciste:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git commit -m "Añade formulario de contacto"</code></pre>
-      </div>
-      <p>Y consulta el historial de commits cuando quieras:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code><span class="cmt"># historial resumido, una línea por commit</span>
+        </div>
+        <p>Confirma el cambio con un mensaje claro que explique <i>qué</i> hiciste:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git commit -m "Añade formulario de contacto"</code></pre>
+        </div>
+        <p>Y consulta el historial de commits cuando quieras:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code><span class="cmt"># historial resumido, una línea por commit</span>
 git log --oneline</code></pre>
-      </div>
-      <div class="box warn">
-        <p>⚠️ <b>Error típico:</b> hacer <code>commit</code> esperando que suba a GitHub. No. El commit solo guarda en
-          tu equipo. Para subirlo hace falta <code>push</code> (paso 4).</p>
-      </div>
-      <div class="box tip">
-        <p>💡 <b>Buen mensaje de commit:</b> en imperativo y concreto — "Corrige cálculo del IVA", no "cambios" ni
-          "asdf". Tu yo del futuro te lo agradecerá.</p>
-      </div>
-    </section>
+        </div>
+        <div class="box warn">
+          <p>⚠️ <b>Error típico:</b> hacer <code>commit</code> esperando que suba a GitHub. No. El commit solo guarda en tu equipo. Para subirlo hace falta <code>push</code> (paso 4).</p>
+        </div>
+        <div class="box tip">
+          <p>💡 <b>Buen mensaje de commit:</b> en imperativo y concreto — "Corrige cálculo del IVA", no "cambios" ni "asdf". Tu yo del futuro te lo agradecerá.</p>
+        </div>
+      </section>
 
-    <section id="github">
-      <h2><span class="num">4</span> Conectar y subir a GitHub</h2>
-      <p class="lead">Ahora enviamos el historial local a la nube.</p>
-      <p>Primero crea un repositorio vacío en GitHub (botón <b>New</b> &rarr; nombre &rarr; <b>Create repository</b>).
-        <b>No</b> marque "Add README" si vas a subir una carpeta que ya tiene commits, para evitar conflictos.</p>
-      <p>Conecta tu repo local con el de GitHub. A esa conexión se le llama <code>origin</code> por convención:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git remote add origin https://github.com/usuario/proyecto.git</code></pre>
-      </div>
-      <p>Sube tu rama <code>main</code> por primera vez:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git push -u origin main</code></pre>
-      </div>
-      <p>La opción <code>-u</code> deja recordada la conexión. A partir de aquí, subir cambios es tan simple como:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git push</code></pre>
-      </div>
-      <div class="box tip">
-        <p>💡 GitHub ya no acepta contraseña al hacer <code>push</code>. Usa un <b>Personal Access Token</b> (Settings
-          &rarr; Developer settings &rarr; Tokens) como contraseña, o configura una clave SSH. Una vez hecho, no vuelves
-          a tocarlo.</p>
-      </div>
-    </section>
+      <section id="github">
+        <h2><span class="num">4</span> Conectar y subir a GitHub</h2>
+        <p class="lead">Now enviamos el historial local a la nube.</p>
+        <p>Primero crea un repositorio vacío en GitHub (botón <b>New</b> &rarr; nombre &rarr; <b>Create repository</b>). <b>No</b> marques "Add README" si vas a subir una carpeta que ya tiene commits, para evitar conflictos.</p>
+        <p>Conecta tu repo local con el de GitHub. A esa conexión se le llama <code>origin</code> por convención:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git remote add origin https://github.com/usuario/proyecto.git</code></pre>
+        </div>
+        <p>Sube tu rama <code>main</code> por primera vez:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git push -u origin main</code></pre>
+        </div>
+        <p>La opción <code>-u</code> deja recordada la conexión. A partir de aquí, subir cambios es tan simple como:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git push</code></pre>
+        </div>
+        <div class="box tip">
+          <p>💡 GitHub ya no acepta contraseña al hacer <code>push</code>. Usa un <b>Personal Access Token</b> (Settings &rarr; Developer settings &rarr; Tokens) como contraseña, o configura una clave SSH. Una vez hecho, no vuelves a loguearte.</p>
+        </div>
+      </section>
 
-    <section id="ramas">
-      <h2><span class="num">5</span> Ramas: trabajar sin romper lo que funciona</h2>
-      <p class="lead">Una rama es una línea de trabajo paralela. Pruebas algo nuevo sin tocar <code>main</code>.</p>
-      <p>Crea una rama y muévete a ella en un solo comando:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git switch -c nueva-funcionalidad</code></pre>
-      </div>
-      <p>Lista tus ramas (la actual sale marcada con <code>*</code>) y cámbiate entre ellas:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git branch              <span class="cmt"># ver ramas</span>
+      <section id="ramas">
+        <h2><span class="num">5</span> Ramas: trabajar sin romper lo que funciona</h2>
+        <p class="lead">Una rama es una línea de trabajo paralela. Pruebas algo nuevo sin tocar <code>main</code>.</p>
+        <p>Crea una rama y muévete a ella en un solo comando:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git switch -c nueva-funcionalidad</code></pre>
+        </div>
+        <p>Lista tus ramas (la actual sale marcada con <code>*</code>) y cámbiate entre ellas:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git branch              <span class="cmt"># ver ramas</span>
 git switch main         <span class="cmt"># volver a main</span></code></pre>
-      </div>
-      <p>Cuando tu trabajo esté listo, vuelve a <code>main</code> y fusiónala (<i>merge</i>):</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git switch main
+        </div>
+        <p>Cuando tu trabajo esté listo, vuelve a <code>main</code> y fusiónala (<i>merge</i>):</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git switch main
 git merge nueva-funcionalidad</code></pre>
-      </div>
-      <div class="box tip">
-        <p>💡 Regla de oro: <code>main</code> siempre debe contener código que funciona. Lo experimental va en ramas. En
-          equipos reales casi nunca se hace <code>merge</code> a mano: se hace con un Pull Request (paso 7).</p>
-      </div>
-    </section>
+        </div>
+        <div class="box tip">
+          <p>💡 Regla de oro: <code>main</code> siempre debe contener código que funciona. Lo experimental va en ramas. En equipos reales casi nunca se hace <code>merge</code> a mano: se hace con un Pull Request (paso 7).</p>
+        </div>
+      </section>
 
-    <section id="colaborar">
-      <h2><span class="num">6</span> Trabajar en equipo: pull y conflictos</h2>
-      <p class="lead">Si otros suben cambios, tu copia se queda desactualizada. Hay que sincronizar.</p>
-      <p>Antes de empezar a trabajar cada día, trae lo último de GitHub:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git pull</code></pre>
-      </div>
-      <p>A veces dos personas editan la misma línea del mismo archivo. Git no sabe cuál vale y avisa de un
-        <b>conflicto</b>. Lo verás así dentro del archivo:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code><span class="cmt">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+      <section id="colaborar">
+        <h2><span class="num">6</span> Trabajar en equipo: pull y conflictos</h2>
+        <p class="lead">Si otros suben cambios, tu copia se queda desactualizada. Hay que sincronizar.</p>
+        <p>Antes de empezar a trabajar cada día, trae lo último de GitHub:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git pull</code></pre>
+        </div>
+        <p>A veces dos personas editan la misma línea del mismo archivo. Git no sabe cuál vale y avisa de un <b>conflicto</b>. Lo verás así dentro del archivo:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code><span class="cmt">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
 tu versión de la línea
 <span class="cmt">=======</span>
 la versión de tu compañero
 <span class="cmt">&gt;&gt;&gt;&gt;&gt;&gt;&gt; main</span></code></pre>
-      </div>
-      <p>Para resolverlo: edita el archivo, deja solo el texto correcto, borra las líneas marcadoras
-        (<code>&lt;&lt;&lt;</code>, <code>===</code>, <code>&gt;&gt;&gt;</code>) y haz un commit normal:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code>git add .
+        </div>
+        <p>Para resolverlo: edita el archivo, deja solo el texto correcto, borra las líneas marcadoras (<code>&lt;&lt;&lt;</code>, <code>===</code>, <code>&gt;&gt;&gt;</code>) y haz un commit normal:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code>git add .
 git commit -m "Resuelve conflicto en estilos"</code></pre>
-      </div>
-      <div class="box warn">
-        <p>⚠️ La mejor forma de evitar conflictos es hacer <code>git pull</code> a menudo y commits pequeños. Cuanto más
-          tiempo pasa sin sincronizar, más feo el conflicto.</p>
-      </div>
-    </section>
+        </div>
+        <div class="box warn">
+          <p>⚠️ La mejor forma de evitar conflictos es hacer <code>git pull</code> a menudo y commits pequeños. Cuanto más tiempo pasa sin sincronizar, más feo el conflicto.</p>
+        </div>
+      </section>
 
-    <section id="pr">
-      <h2><span class="num">7</span> Pull Requests: la forma profesional de fusionar</h2>
-      <p class="lead">Un Pull Request (PR) es pedir "por favor, mete mi rama en main" para que alguien lo revise antes.
-      </p>
-      <p>El flujo completo en equipo es:</p>
-      <ol>
-        <li>Creas una rama y haces tus commits (pasos 3 y 5).</li>
-        <li>Subes esa rama a GitHub: <code>git push -u origin nueva-funcionalidad</code></li>
-        <li>En la web de GitHub aparece un botón <b>Compare &amp; pull request</b>. Púlsalo.</li>
-        <li>Escribes un título y una descripción de lo que cambiaste.</li>
-        <li>Un compañero (o el profe) revisa, comenta y aprueba.</li>
-        <li>Se pulsa <b>Merge pull request</b> y tu código entra en <code>main</code>.</li>
-      </ol>
-      <div class="box tip">
-        <p>💡 La gracia del PR es la <b>revisión</b>: alguien mira tu código antes de que entre en la rama principal.
-          Así se detectan errores y se aprende del código de los demás. Es como funciona casi todo el software del
-          mundo.</p>
-      </div>
-    </section>
+      <section id="pr">
+        <h2><span class="num">7</span> Pull Requests: la forma profesional de fusionar</h2>
+        <p class="lead">Un Pull Request (PR) es pedir "por favor, mete mi rama en main" para que alguien lo revise antes.</p>
+        <p>El flujo completo en equipo es:</p>
+        <ol>
+          <li>Creas una rama y haces tus commits (pasos 3 y 5).</li>
+          <li>Subes esa rama a GitHub: <code>git push -u origin nueva-funcionalidad</code></li>
+          <li>En la web de GitHub aparece un botón <b>Compare &amp; pull request</b>. Púlsalo.</li>
+          <li>Escribes un título y una descripción de lo que cambiaste.</li>
+          <li>Un compañero (o el profe) revisa, comenta y aprueba.</li>
+          <li>Se pulsa <b>Merge pull request</b> y tu código entra en <code>main</code>.</li>
+        </ol>
+        <div class="box tip">
+          <p>💡 La gracia del PR es la <b>revisión</b>: alguien mira tu código antes de que entre en la rama principal. Así se detectan errores y se aprende del código de los demás. Es como funciona casi todo el software del mundo.</p>
+        </div>
+      </section>
 
-    <section id="ignore">
-      <h2><span class="num">8</span> .gitignore: lo que NO debe subir</h2>
-      <p class="lead">Hay archivos que no quieres en el repo: contraseñas, dependencias pesadas, archivos temporales.
-      </p>
-      <p>Crea un archivo llamado <code>.gitignore</code> en la raíz del proyecto y escribe dentro lo que Git debe
-        ignorar:</p>
-      <div class="code"><button class="copy">Copiar</button>
-        <pre><code><span class="cmt"># dependencias</span>
+      <section id="ignore">
+        <h2><span class="num">8</span> .gitignore: lo que NO debe subir</h2>
+        <p class="lead">Hay archivos que no quieres en el repo: contraseñas, dependencias pesadas, archivos temporales.</p>
+        <p>Crea un archivo llamado <code>.gitignore</code> en la raíz del proyecto y escribe dentro lo que Git debe ignorar:</p>
+        <div class="code"><button class="copy">Copiar</button>
+          <pre><code><span class="cmt"># dependencias</span>
 node_modules/
 
 <span class="cmt"># archivos de compilación</span>
@@ -870,97 +719,60 @@ appsettings.local.json
 <span class="cmt"># basura del sistema</span>
 .DS_Store
 Thumbs.db</code></pre>
-      </div>
-      <div class="box warn">
-        <p>⚠️ <b>Nunca subas contraseñas ni claves API.</b> Una vez en el historial, quedan ahí aunque borres el archivo
-          después. Añádelas a <code>.gitignore</code> desde el primer commit.</p>
-      </div>
-      <div class="box tip">
-        <p>💡 GitHub ofrece plantillas de <code>.gitignore</code> ya hechas por lenguaje (Node, Python, Visual Studio…)
-          al crear el repo. Aprovéchalas.</p>
-      </div>
-    </section>
+        </div>
+        <div class="box warn">
+          <p>⚠️ <b>Nunca subas contraseñas ni claves API.</b> Una vez en el historial, quedan ahí aunque borres el archivo después. Añádelas a <code>.gitignore</code> desde el primer commit.</p>
+        </div>
+        <div class="box tip">
+          <p>💡 GitHub ofrece plantillas de <code>.gitignore</code> ya hechas por lenguaje (Node, Python, Visual Studio…) al crear el repo. Aprovéchalas.</p>
+        </div>
+      </section>
 
-    <hr>
+      <hr>
 
-    <section id="chuleta">
-      <h2><span class="num">★</span> Chuleta de comandos esenciales</h2>
-      <p class="lead">Los que usarás el 95% del tiempo. Guárdala a mano.</p>
-      <table class="cheat">
-        <thead>
-          <tr>
-            <th>Comando</th>
-            <th>Qué hace</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>git status</code></td>
-            <td>Ver qué ha cambiado y en qué estado estás</td>
-          </tr>
-          <tr>
-            <td><code>git add .</code></td>
-            <td>Preparar todos los cambios para el commit</td>
-          </tr>
-          <tr>
-            <td><code>git commit -m "msg"</code></td>
-            <td>Guardar los cambios preparados con un mensaje</td>
-          </tr>
-          <tr>
-            <td><code>git push</code></td>
-            <td>Subir tus commits a GitHub</td>
-          </tr>
-          <tr>
-            <td><code>git pull</code></td>
-            <td>Bajar los cambios de GitHub a tu equipo</td>
-          </tr>
-          <tr>
-            <td><code>git clone URL</code></td>
-            <td>Descargar un repositorio entero por primera vez</td>
-          </tr>
-          <tr>
-            <td><code>git switch -c rama</code></td>
-            <td>Crear una rama nueva y cambiarse a ella</td>
-          </tr>
-          <tr>
-            <td><code>git switch main</code></td>
-            <td>Cambiarse a otra rama existente</td>
-          </tr>
-          <tr>
-            <td><code>git merge rama</code></td>
-            <td>Fusionar otra rama en la actual</td>
-          </tr>
-          <tr>
-            <td><code>git log --oneline</code></td>
-            <td>Ver el historial de commits resumido</td>
-          </tr>
-          <tr>
-            <td><code>git diff</code></td>
-            <td>Ver exactamente qué líneas cambiaron</td>
-          </tr>
-          <tr>
-            <td><code>git restore archivo</code></td>
-            <td>Descartar cambios no guardados de un archivo</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="box tip" style="margin-top:24px">
-        <p>🎯 <b>Reto para clase:</b> en parejas, cread un repo en GitHub, que cada uno clone, cree su rama, haga un
-          cambio, lo suba y abra un Pull Request al otro. Quien revise, que deje un comentario antes de aprobar.</p>
-      </div>
-    </section>
-  </main>
+      <section id="chuleta">
+        <h2><span class="num">★</span> Chuleta de comandos esenciales</h2>
+        <p class="lead">Los que usarás el 95% del tiempo. Guárdala a mano.</p>
+        <table class="cheat">
+          <thead>
+            <tr>
+              <th>Comando</th>
+              <th>Qué hace</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>git status</code></td><td>Ver qué ha cambiado y en qué estado estás</td></tr>
+            <tr><td><code>git add .</code></td><td>Preparar todos los cambios para el commit</td></tr>
+            <tr><td><code>git commit -m "msg"</code></td><td>Guardar los cambios preparados con un mensaje</td></tr>
+            <tr><td><code>git push</code></td><td>Subir tus commits a GitHub</td></tr>
+            <tr><td><code>git pull</code></td><td>Bajar los cambios de GitHub a tu equipo</td></tr>
+            <tr><td><code>git clone URL</code></td><td>Descargar un repositorio entero por primera vez</td></tr>
+            <tr><td><code>git switch -c rama</code></td><td>Crear una rama nueva y cambiarse a ella</td></tr>
+            <tr><td><code>git switch main</code></td><td>Cambiarse a otra rama existente</td></tr>
+            <tr><td><code>git merge rama</code></td><td>Fusionar otra rama en la actual</td></tr>
+            <tr><td><code>git log --oneline</code></td><td>Ver el historial de commits resumido</td></tr>
+            <tr><td><code>git diff</code></td><td>Ver exactamente qué líneas cambiaron</td></tr>
+            <tr><td><code>git restore archivo</code></td><td>Descartar cambios no guardados de un archivo</td></tr>
+          </tbody>
+        </table>
+        <div class="box tip" style="margin-top:24px">
+          <p>🎯 <b>Reto para clase:</b> en parejas, cread un repo en GitHub, que cada uno clone, cree su rama, haga un cambio, lo suba y abra un Pull Request al otro. Quien revise, que deje un comentario antes de aprobar.</p>
+        </div>
+      </section>
+    </main>
 
-  <footer>
-    Tutorial de Git &amp; GitHub · material de clase · <span id="year"></span> · siéntete libre de adaptarlo para tus
-    alumnos.
-  </footer>
+    <footer>
+      Tutorial de Git &amp; GitHub · material de clase · <span id="year"></span> · siéntete libre de adaptarlo para tus alumnos.
+    </footer>
 
-  <script>
+    <script>
     (function () {
+      // Set current year
+      document.getElementById('year').textContent = new Date().getFullYear();
+
       // ---- Modo Claro / Modo Oscuro ----
       const themeBtn = document.getElementById('themeBtn');
-      themeBtn.addEventListener('click', function () {
+      themeBtn.addEventListener('click', function() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         if (currentTheme === 'dark') {
           document.documentElement.removeAttribute('data-theme');
@@ -972,124 +784,119 @@ Thumbs.db</code></pre>
       });
 
       // ---- Generación Dinámica del Menú a partir de las Secciones ----
-      const tocBar = document.getElementById('tocBar');
+      const linksContainer = document.getElementById('tocLinksContainer');
       function buildDynamicAccordion() {
         const sectionsData = [];
         document.querySelectorAll('section h2, section h3').forEach(function (h) {
           const sec = h.closest('section');
           if (!sec || !sec.id) return;
-          // Eliminar marcas numéricas o iconos para limpiar los títulos del menú lateral
           const text = h.textContent.replace(/[0-9★☆↻i]\s*/, '').replace('·', '').trim();
           const isSub = h.tagName === 'H3';
           sectionsData.push({ id: sec.id, text: text, sub: isSub });
         });
 
-        tocBar.innerHTML = '';
+        linksContainer.innerHTML = '';
         sectionsData.forEach(function (item) {
           const a = document.createElement('a');
           a.href = '#' + item.id;
           a.textContent = (item.sub ? '↳ ' : '') + item.text;
           if (item.sub) a.classList.add('sub');
-
-          a.addEventListener('click', function () {
-            // Cierra el menú desplegable solo en dispositivos móviles tras pulsar enlace
-            if (window.innerWidth <= 850) {
-              document.body.classList.remove('mobile-open');
-              document.getElementById('overlay').classList.remove('show');
-            }
-          });
-          tocBar.appendChild(a);
+          linksContainer.appendChild(a);
         });
       }
       buildDynamicAccordion();
 
-      // ---- Control Exclusivo de Acordeón en PC y Menú Desplegable en Móviles ----
+      // ---- Control de Apertura/Cierre del Menú (Responsive e Inteligente) ----
       const menuBtn = document.getElementById('menuBtn');
-      const overlay = document.getElementById('overlay');
-
-      menuBtn.addEventListener('click', function () {
-        if (window.innerWidth > 850) {
-          // EN COMPUTADORA: Contrae/expande la barra lateral empujando el contenido principal
+      menuBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (window.innerWidth > 900) {
           document.body.classList.toggle('sidebar-closed');
         } else {
-          // EN MÓVIL: Panel flotante por encima del contenido sin alterar la rejilla
-          const isMobileOpen = document.body.toggleAttribute ? document.body.classList.toggle('mobile-open') : false;
-          overlay.classList.toggle('show', isMobileOpen);
+          document.body.classList.toggle('sidebar-open');
         }
       });
 
-      overlay.addEventListener('click', function () {
-        document.body.classList.remove('mobile-open');
-        overlay.classList.remove('show');
+      // Cerrar menú móvil al hacer click fuera
+      document.addEventListener('click', function(e) {
+        if(window.innerWidth <= 900 && !document.getElementById('tocBar').contains(e.target) && e.target !== menuBtn) {
+          document.body.classList.remove('sidebar-open');
+        }
       });
 
-      // ---- Sincronización Automática de Scroll (Active Class) ----
-      var navLinks = document.querySelectorAll('.toc a');
-      var sections = [];
-      navLinks.forEach(function (a) {
-        var id = a.getAttribute('href').slice(1);
-        var sec = document.getElementById(id);
-        if (sec) sections.push({ el: sec, link: a });
+      // ---- Animación Perfeccionada de Entrada (Scroll Reveal) ----
+      const sections = document.querySelectorAll('main > section, main > hr');
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" });
+
+      sections.forEach(section => {
+        revealObserver.observe(section);
       });
 
-      function setActive() {
-        var scrollY = window.scrollY + 120;
-        var activeId = null;
-        sections.forEach(function (s) {
-          if (s.el.offsetTop <= scrollY) activeId = s.el.id;
-        });
-        navLinks.forEach(function (a) { a.classList.remove('active'); });
-        sections.forEach(function (s) {
-          if (s.el.id === activeId) s.link.classList.add('active');
-        });
-      }
-      window.addEventListener('scroll', setActive);
-      setActive();
+      // ---- Sincronización de barra de progreso e Índice Activo ----
+      const navLinks = document.querySelectorAll('#tocLinksContainer a');
+      const progressEl = document.getElementById('progress');
 
-      // ---- Barra de progreso ----
-      var bar = document.getElementById('progress');
       window.addEventListener('scroll', function () {
-        var h = document.documentElement.scrollHeight - window.innerHeight;
-        bar.style.width = h ? (window.scrollY / h * 100) + '%' : '0%';
-      });
+        // Barra de progreso superior
+        const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+        if (totalHeight > 0) {
+          const progress = (window.pageYOffset / totalHeight) * 100;
+          progressEl.style.width = progress + '%';
+        }
 
-      // ---- Botón volver arriba ----
-      var topBtn = document.getElementById('backToTop');
-      window.addEventListener('scroll', function () {
-        if (window.scrollY > 400) topBtn.classList.add('visible');
-        else topBtn.classList.remove('visible');
-      });
-      topBtn.addEventListener('click', function () {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-
-      // ---- Reveal on scroll (Animación de entrada) ----
-      var revealSections = document.querySelectorAll('section');
-      var observer = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) entry.target.classList.add('visible');
+        // Iluminación del enlace actual según el scroll
+        let currentSectionId = "";
+        sections.forEach(sec => {
+          if(!sec.id) return;
+          const rect = sec.getBoundingClientRect();
+          if (rect.top <= 120) {
+            currentSectionId = sec.id;
+          }
         });
-      }, { threshold: 0.1 });
-      revealSections.forEach(function (s) { observer.observe(s); });
 
-      // ---- Año Dinámico del Footer ----
-      document.getElementById('year').textContent = new Date().getFullYear();
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + currentSectionId) {
+            link.classList.add('active');
+          }
+        });
+      });
 
-      // ---- Botón de copiado de código ----
-      document.querySelectorAll('.code .copy').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var code = btn.parentElement.querySelector('code');
-          navigator.clipboard.writeText(code.innerText).then(function () {
-            btn.textContent = '¡Copiado!';
-            btn.classList.add('done');
-            setTimeout(function () {
-              btn.textContent = 'Copiar';
-              btn.classList.remove('done');
-            }, 1500);
+      // ---- Botón de Copiado Funcional ----
+      document.querySelectorAll('.code .copy').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const codeEl = this.nextElementSibling.querySelector('code');
+          navigator.clipboard.writeText(codeEl.textContent.trim()).then(() => {
+            this.textContent = '¡Copiado!';
+            this.classList.add('done');
+            setTimeout(() => {
+              this.textContent = 'Copiar';
+              this.classList.remove('done');
+            }, 2000);
           });
         });
       });
+
+      // ---- Botón Volver Arriba ----
+      const backToTopBtn = document.getElementById('backToTop');
+      window.addEventListener('scroll', function() {
+        if (window.pageYOffset > 400) {
+          backToTopBtn.classList.add('visible');
+        } else {
+          backToTopBtn.classList.remove('visible');
+        }
+      });
+      backToTopBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
     })();
-  </script>
-</body>
+    </script>
+  </body>
 </html>
