@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git y GitHub — Tutorial guiado</title>
+<style>
+  :root {
+    --git: #f05133;
+    --git-dark: #c1351b;
+    --ink: #1f2328;
+    --muted: #57606a;
+    --line: #d0d7de;
+    --bg: #f6f8fa;
+    --card: #ffffff;
+    --code-bg: #0d1117;
+    --code-ink: #e6edf3;
+    --ok: #1a7f37;
+    --warn: #9a6700;
+    --warn-bg: #fff8c5;
+    --tip-bg: #ddf4ff;
+    --tip-line: #54aeff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.65;
+  }
+  code, pre, kbd { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; }
+
+  /* ---------- Header ---------- */
+  header.hero {
+    background: linear-gradient(135deg, #24292f 0%, #32383f 100%);
+    color: #fff;
+    padding: 56px 20px 48px;
+    text-align: center;
+    border-bottom: 4px solid var(--git);
+  }
+  header.hero .logo { font-size: 44px; margin-bottom: 6px; }
+  header.hero h1 { margin: 0 0 10px; font-size: clamp(28px, 5vw, 44px); letter-spacing: -0.5px; }
+  header.hero p { margin: 0 auto; max-width: 620px; color: #c9d1d9; font-size: 18px; }
+  .tag {
+    display: inline-block; margin-top: 18px; padding: 5px 14px; border-radius: 999px;
+    background: rgba(240,81,51,.18); color: #ffb4a3; font-size: 14px; font-weight: 600;
+    border: 1px solid rgba(240,81,51,.4);
+  }
+
+  /* ---------- Nav ---------- */
+  nav.toc {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
+    padding: 10px 12px;
+  }
+  nav.toc a {
+    text-decoration: none; color: var(--muted); font-size: 13.5px; font-weight: 600;
+    padding: 6px 11px; border-radius: 7px; white-space: nowrap;
+  }
+  nav.toc a:hover { background: var(--bg); color: var(--ink); }
+
+  /* ---------- Layout ---------- */
+  main { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
+  section { margin-bottom: 52px; scroll-margin-top: 80px; }
+  h2 { font-size: 26px; margin: 0 0 4px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 14px; }
+  h2 .num {
+    flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%;
+    background: var(--git); color: #fff; font-size: 18px; font-weight: 700;
+    display: grid; place-items: center;
+  }
+  h3 { font-size: 18px; margin: 28px 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 18px 52px; }
+  p { margin: 0 0 14px; }
+  ul, ol { margin: 0 0 16px; padding-left: 22px; }
+  li { margin-bottom: 7px; }
+  a { color: var(--git-dark); }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 0 0 40px; }
+
+  /* ---------- Code blocks ---------- */
+  .code {
+    position: relative; background: var(--code-bg); border-radius: 10px;
+    margin: 0 0 18px; overflow: hidden; border: 1px solid #30363d;
+  }
+  .code pre { margin: 0; padding: 16px 18px; overflow-x: auto; }
+  .code code { color: var(--code-ink); font-size: 14px; line-height: 1.8; white-space: pre; }
+  .code .cmt { color: #8b949e; }
+  .code .copy {
+    position: absolute; top: 9px; right: 9px;
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+  }
+  .code .copy:hover { background: #30363d; color: #fff; }
+  .code .copy.done { background: var(--ok); color: #fff; border-color: var(--ok); }
+  :not(pre) > code {
+    background: #eaeef2; color: #24292f; padding: 2px 6px; border-radius: 5px; font-size: 0.88em;
+  }
+
+  /* ---------- Callouts ---------- */
+  .box { border-radius: 10px; padding: 14px 18px; margin: 0 0 18px; font-size: 15px; }
+  .box p:last-child { margin-bottom: 0; }
+  .box.tip { background: var(--tip-bg); border-left: 4px solid var(--tip-line); }
+  .box.warn { background: var(--warn-bg); border-left: 4px solid var(--warn); }
+  .box b { font-weight: 700; }
+
+  /* ---------- Workflow diagram ---------- */
+  .diagram { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin: 0 0 24px; }
+  .diagram svg { width: 100%; height: auto; display: block; }
+
+  /* ---------- Cheat table ---------- */
+  .cheat { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--line); font-size: 14.5px; }
+  .cheat th { background: #24292f; color: #fff; text-align: left; padding: 11px 14px; font-size: 13px; letter-spacing: .3px; }
+  .cheat td { padding: 10px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+  .cheat tr:nth-child(even) td { background: #fafbfc; }
+  .cheat td code { background: #eaeef2; color: #24292f; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
+
+  footer { text-align: center; color: var(--muted); font-size: 14px; padding: 30px 20px 50px; border-top: 1px solid var(--line); }
+
+  @media (max-width: 600px) {
+    .lead { margin-left: 0; }
+    h2 { font-size: 22px; }
+    nav.toc { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="logo">🐙</div>
+  <h1>Git &amp; GitHub paso a paso</h1>
+  <p>Una guía práctica para llevar tu código del ordenador a la nube, trabajar con ramas y colaborar sin pisarte con nadie.</p>
+  <div class="tag">Tutorial guiado · Nivel intermedio</div>
+</header>
+
+<nav class="toc">
+  <a href="#intro">Git vs GitHub</a>
+  <a href="#flujo">El flujo</a>
+  <a href="#config">1 · Configurar</a>
+  <a href="#repo">2 · Crear repo</a>
+  <a href="#commit">3 · Commits</a>
+  <a href="#github">4 · Subir a GitHub</a>
+  <a href="#ramas">5 · Ramas</a>
+  <a href="#colaborar">6 · Colaborar</a>
+  <a href="#pr">7 · Pull Requests</a>
+  <a href="#ignore">8 · .gitignore</a>
+  <a href="#chuleta">Chuleta</a>
+</nav>
+
+<main>
+
+  <!-- INTRO -->
+  <section id="intro">
+    <h2><span class="num">i</span> Git no es GitHub</h2>
+    <p class="lead">Se nombran juntos todo el rato, pero son cosas distintas.</p>
+    <p><b>Git</b> es el programa que se instala en tu ordenador y guarda el historial de tu proyecto: cada cambio, quién lo hizo y cuándo. Funciona sin internet.</p>
+    <p><b>GitHub</b> es una página web donde subes una copia de ese historial para guardarlo en la nube, compartirlo y trabajar en equipo. Hay alternativas (GitLab, Bitbucket), pero el flujo es el mismo.</p>
+    <div class="box tip">
+      <p>💡 <b>La analogía:</b> Git es como el control de versiones de un documento (guardar partidas). GitHub es como Google Drive donde dejas ese documento para que otros lo vean y lo editen contigo.</p>
+    </div>
+  </section>
+
+  <!-- FLUJO -->
+  <section id="flujo">
+    <h2><span class="num">↻</span> El flujo que vamos a repetir siempre</h2>
+    <p class="lead">Tres "zonas" en tu equipo y una en la nube. Todo Git se reduce a mover cambios entre ellas.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 230" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, sans-serif">
+        <!-- boxes -->
+        <g>
+          <rect x="10" y="70" width="150" height="70" rx="10" fill="#fff" stroke="#d0d7de" stroke-width="1.5"/>
+          <text x="85" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2328">Working Dir</text>
+          <text x="85" y="120" text-anchor="middle" font-size="11.5" fill="#57606a">tus archivos</text>
+        </g>
+        <g>
+          <rect x="210" y="70" width="150" height="70" rx="10" fill="#fff" stroke="#d0d7de" stroke-width="1.5"/>
+          <text x="285" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2328">Staging</text>
+          <text x="285" y="120" text-anchor="middle" font-size="11.5" fill="#57606a">lo preparado</text>
+        </g>
+        <g>
+          <rect x="410" y="70" width="150" height="70" rx="10" fill="#fff" stroke="#d0d7de" stroke-width="1.5"/>
+          <text x="485" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2328">Repo local</text>
+          <text x="485" y="120" text-anchor="middle" font-size="11.5" fill="#57606a">historial .git</text>
+        </g>
+        <g>
+          <rect x="610" y="70" width="140" height="70" rx="10" fill="#24292f" stroke="#24292f"/>
+          <text x="680" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">GitHub</text>
+          <text x="680" y="120" text-anchor="middle" font-size="11.5" fill="#c9d1d9">la nube</text>
+        </g>
+        <!-- arrows -->
+        <defs>
+          <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#f05133"/>
+          </marker>
+        </defs>
+        <line x1="162" y1="92" x2="206" y2="92" stroke="#f05133" stroke-width="2" marker-end="url(#ar)"/>
+        <text x="184" y="58" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f05133">add</text>
+        <line x1="362" y1="92" x2="406" y2="92" stroke="#f05133" stroke-width="2" marker-end="url(#ar)"/>
+        <text x="384" y="58" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f05133">commit</text>
+        <line x1="562" y1="92" x2="606" y2="92" stroke="#f05133" stroke-width="2" marker-end="url(#ar)"/>
+        <text x="584" y="58" text-anchor="middle" font-size="11.5" font-weight="700" fill="#f05133">push</text>
+        <!-- pull back -->
+        <line x1="606" y1="120" x2="14" y2="120" stroke="#8b949e" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ar2)"/>
+        <defs>
+          <marker id="ar2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#8b949e"/>
+          </marker>
+        </defs>
+        <text x="330" y="160" text-anchor="middle" font-size="11.5" font-weight="700" fill="#8b949e">pull / clone  ·  traer cambios de vuelta</text>
+      </svg>
+    </div>
+    <p>Lee el dibujo de izquierda a derecha: editas archivos (<b>Working Dir</b>), eliges cuáles guardar con <code>add</code> (<b>Staging</b>), los confirmas con <code>commit</code> (<b>Repo local</b>) y los envías a la nube con <code>push</code> (<b>GitHub</b>). La flecha de vuelta (<code>pull</code>) trae lo que otros hayan subido.</p>
+  </section>
+
+  <hr>
+
+  <!-- 1 CONFIG -->
+  <section id="config">
+    <h2><span class="num">1</span> Configurar Git (solo la primera vez)</h2>
+    <p class="lead">Git necesita saber tu nombre y correo para firmar cada commit.</p>
+    <p>Comprueba que lo tienes instalado:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git --version</code></pre></div>
+    <p>Configura tu identidad (usa el mismo correo que en tu cuenta de GitHub):</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git config --global user.name "Tu Nombre"
+git config --global user.email "tucorreo@ejemplo.com"</code></pre></div>
+    <p>Define <code>main</code> como nombre de la rama principal por defecto:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git config --global init.defaultBranch main</code></pre></div>
+    <div class="box tip">
+      <p>💡 <code>--global</code> aplica la configuración a todos tus proyectos. Para revisar cómo está todo: <code>git config --list</code>.</p>
+    </div>
+  </section>
+
+  <!-- 2 REPO -->
+  <section id="repo">
+    <h2><span class="num">2</span> Crear o clonar un repositorio</h2>
+    <p class="lead">Un repositorio (repo) es una carpeta que Git vigila. Hay dos formas de empezar.</p>
+    <h3>Opción A — Convertir una carpeta tuya en repo</h3>
+    <div class="code"><button class="copy">Copiar</button><pre><code><span class="cmt"># dentro de la carpeta de tu proyecto</span>
+git init</code></pre></div>
+    <p>Esto crea una subcarpeta oculta <code>.git</code> donde se guarda todo el historial. Si la borras, pierdes el historial.</p>
+    <h3>Opción B — Clonar un repo que ya existe en GitHub</h3>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git clone https://github.com/usuario/proyecto.git</code></pre></div>
+    <p>Descarga una copia completa (con todo su historial) en una carpeta nueva. Es lo que harás para bajar el proyecto de la clase o el de un compañero.</p>
+  </section>
+
+  <!-- 3 COMMIT -->
+  <section id="commit">
+    <h2><span class="num">3</span> El ciclo de trabajo: add y commit</h2>
+    <p class="lead">Este es el corazón de Git y lo repetirás decenas de veces al día.</p>
+    <p>Antes de nada, mira siempre en qué estado estás. <code>git status</code> es tu mejor amigo:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git status</code></pre></div>
+    <p>Prepara los archivos que quieres guardar (pasarlos a <i>Staging</i>):</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code><span class="cmt"># un archivo concreto</span>
+git add index.html
+
+<span class="cmt"># todos los cambios de golpe</span>
+git add .</code></pre></div>
+    <p>Confirma el cambio con un mensaje claro que explique <i>qué</i> hiciste:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git commit -m "Añade formulario de contacto"</code></pre></div>
+    <p>Y consulta el historial de commits cuando quieras:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code><span class="cmt"># historial resumido, una línea por commit</span>
+git log --oneline</code></pre></div>
+    <div class="box warn">
+      <p>⚠️ <b>Error típico:</b> hacer <code>commit</code> esperando que suba a GitHub. No. El commit solo guarda en tu equipo. Para subirlo hace falta <code>push</code> (paso 4).</p>
+    </div>
+    <div class="box tip">
+      <p>💡 <b>Buen mensaje de commit:</b> en imperativo y concreto — "Corrige cálculo del IVA", no "cambios" ni "asdf". Tu yo del futuro te lo agradecerá.</p>
+    </div>
+  </section>
+
+  <!-- 4 GITHUB -->
+  <section id="github">
+    <h2><span class="num">4</span> Conectar y subir a GitHub</h2>
+    <p class="lead">Ahora enviamos el historial local a la nube.</p>
+    <p>Primero crea un repositorio vacío en GitHub (botón <b>New</b> &rarr; nombre &rarr; <b>Create repository</b>). <b>No</b> marques "Add README" si vas a subir una carpeta que ya tiene commits, para evitar conflictos.</p>
+    <p>Conecta tu repo local con el de GitHub. A esa conexión se le llama <code>origin</code> por convención:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git remote add origin https://github.com/usuario/proyecto.git</code></pre></div>
+    <p>Sube tu rama <code>main</code> por primera vez:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git push -u origin main</code></pre></div>
+    <p>La opción <code>-u</code> deja recordada la conexión. A partir de aquí, subir cambios es tan simple como:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git push</code></pre></div>
+    <div class="box tip">
+      <p>💡 GitHub ya no acepta contraseña al hacer <code>push</code>. Usa un <b>Personal Access Token</b> (Settings &rarr; Developer settings &rarr; Tokens) como contraseña, o configura una clave SSH. Una vez hecho, no vuelves a tocarlo.</p>
+    </div>
+  </section>
+
+  <!-- 5 RAMAS -->
+  <section id="ramas">
+    <h2><span class="num">5</span> Ramas: trabajar sin romper lo que funciona</h2>
+    <p class="lead">Una rama es una línea de trabajo paralela. Pruebas algo nuevo sin tocar <code>main</code>.</p>
+    <p>Crea una rama y muévete a ella en un solo comando:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git switch -c nueva-funcionalidad</code></pre></div>
+    <p>Lista tus ramas (la actual sale marcada con <code>*</code>) y cámbiate entre ellas:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git branch              <span class="cmt"># ver ramas</span>
+git switch main         <span class="cmt"># volver a main</span></code></pre></div>
+    <p>Cuando tu trabajo esté listo, vuelve a <code>main</code> y fusiónala (<i>merge</i>):</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git switch main
+git merge nueva-funcionalidad</code></pre></div>
+    <div class="box tip">
+      <p>💡 Regla de oro: <code>main</code> siempre debe contener código que funciona. Lo experimental va en ramas. En equipos reales casi nunca se hace <code>merge</code> a mano: se hace con un Pull Request (paso 7).</p>
+    </div>
+  </section>
+
+  <!-- 6 COLABORAR -->
+  <section id="colaborar">
+    <h2><span class="num">6</span> Trabajar en equipo: pull y conflictos</h2>
+    <p class="lead">Si otros suben cambios, tu copia se queda desactualizada. Hay que sincronizar.</p>
+    <p>Antes de empezar a trabajar cada día, trae lo último de GitHub:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git pull</code></pre></div>
+    <p>A veces dos personas editan la misma línea del mismo archivo. Git no sabe cuál vale y avisa de un <b>conflicto</b>. Lo verás así dentro del archivo:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code><span class="cmt">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span>
+tu versión de la línea
+<span class="cmt">=======</span>
+la versión de tu compañero
+<span class="cmt">&gt;&gt;&gt;&gt;&gt;&gt;&gt; main</span></code></pre></div>
+    <p>Para resolverlo: edita el archivo, deja solo el texto correcto, borra las líneas marcadoras (<code>&lt;&lt;&lt;</code>, <code>===</code>, <code>&gt;&gt;&gt;</code>) y haz un commit normal:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code>git add .
+git commit -m "Resuelve conflicto en estilos"</code></pre></div>
+    <div class="box warn">
+      <p>⚠️ La mejor forma de evitar conflictos es hacer <code>git pull</code> a menudo y commits pequeños. Cuanto más tiempo pasa sin sincronizar, más feo el conflicto.</p>
+    </div>
+  </section>
+
+  <!-- 7 PR -->
+  <section id="pr">
+    <h2><span class="num">7</span> Pull Requests: la forma profesional de fusionar</h2>
+    <p class="lead">Un Pull Request (PR) es pedir "por favor, mete mi rama en main" para que alguien lo revise antes.</p>
+    <p>El flujo completo en equipo es:</p>
+    <ol>
+      <li>Creas una rama y haces tus commits (pasos 3 y 5).</li>
+      <li>Subes esa rama a GitHub: <code>git push -u origin nueva-funcionalidad</code></li>
+      <li>En la web de GitHub aparece un botón <b>Compare &amp; pull request</b>. Púlsalo.</li>
+      <li>Escribes un título y una descripción de lo que cambiaste.</li>
+      <li>Un compañero (o el profe) revisa, comenta y aprueba.</li>
+      <li>Se pulsa <b>Merge pull request</b> y tu código entra en <code>main</code>.</li>
+    </ol>
+    <div class="box tip">
+      <p>💡 La gracia del PR es la <b>revisión</b>: alguien mira tu código antes de que entre en la rama principal. Así se detectan errores y se aprende del código de los demás. Es como funciona casi todo el software del mundo.</p>
+    </div>
+  </section>
+
+  <!-- 8 IGNORE -->
+  <section id="ignore">
+    <h2><span class="num">8</span> .gitignore: lo que NO debe subir</h2>
+    <p class="lead">Hay archivos que no quieres en el repo: contraseñas, dependencias pesadas, archivos temporales.</p>
+    <p>Crea un archivo llamado <code>.gitignore</code> en la raíz del proyecto y escribe dentro lo que Git debe ignorar:</p>
+    <div class="code"><button class="copy">Copiar</button><pre><code><span class="cmt"># dependencias</span>
+node_modules/
+
+<span class="cmt"># archivos de compilación</span>
+/bin/
+/obj/
+*.exe
+
+<span class="cmt"># secretos y configuración local</span>
+.env
+appsettings.local.json
+
+<span class="cmt"># basura del sistema</span>
+.DS_Store
+Thumbs.db</code></pre></div>
+    <div class="box warn">
+      <p>⚠️ <b>Nunca subas contraseñas ni claves API.</b> Una vez en el historial, quedan ahí aunque borres el archivo después. Añádelas a <code>.gitignore</code> desde el primer commit.</p>
+    </div>
+    <div class="box tip">
+      <p>💡 GitHub ofrece plantillas de <code>.gitignore</code> ya hechas por lenguaje (Node, Python, Visual Studio…) al crear el repo. Aprovéchalas.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- CHEAT -->
+  <section id="chuleta">
+    <h2><span class="num">★</span> Chuleta de comandos esenciales</h2>
+    <p class="lead">Los que usarás el 95% del tiempo. Guárdala a mano.</p>
+    <table class="cheat">
+      <thead>
+        <tr><th>Comando</th><th>Qué hace</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>git status</code></td><td>Ver qué ha cambiado y en qué estado estás</td></tr>
+        <tr><td><code>git add .</code></td><td>Preparar todos los cambios para el commit</td></tr>
+        <tr><td><code>git commit -m "msg"</code></td><td>Guardar los cambios preparados con un mensaje</td></tr>
+        <tr><td><code>git push</code></td><td>Subir tus commits a GitHub</td></tr>
+        <tr><td><code>git pull</code></td><td>Bajar los cambios de GitHub a tu equipo</td></tr>
+        <tr><td><code>git clone URL</code></td><td>Descargar un repositorio entero por primera vez</td></tr>
+        <tr><td><code>git switch -c rama</code></td><td>Crear una rama nueva y cambiarse a ella</td></tr>
+        <tr><td><code>git switch main</code></td><td>Cambiarse a otra rama existente</td></tr>
+        <tr><td><code>git merge rama</code></td><td>Fusionar otra rama en la actual</td></tr>
+        <tr><td><code>git log --oneline</code></td><td>Ver el historial de commits resumido</td></tr>
+        <tr><td><code>git diff</code></td><td>Ver exactamente qué líneas cambiaron</td></tr>
+        <tr><td><code>git restore archivo</code></td><td>Descartar cambios no guardados de un archivo</td></tr>
+      </tbody>
+    </table>
+    <div class="box tip" style="margin-top:24px">
+      <p>🎯 <b>Reto para clase:</b> en parejas, cread un repo en GitHub, que cada uno clone, cree su rama, haga un cambio, lo suba y abra un Pull Request al otro. Quien revise, que deje un comentario antes de aprobar.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Tutorial de Git &amp; GitHub · material de clase · siéntete libre de adaptarlo para tus alumnos.
+</footer>
+
+<script>
+  document.querySelectorAll('.code .copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.parentElement.querySelector('code');
+      var text = code.innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = '¡Copiado!';
+        btn.classList.add('done');
+        setTimeout(function () {
+          btn.textContent = 'Copiar';
+          btn.classList.remove('done');
+        }, 1500);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
